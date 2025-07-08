@@ -9,6 +9,7 @@ interface InfoPanelProps {
   isLoading: boolean;
   error: string | null;
   isSelectingBounds: boolean;
+  selectionStep: 'none' | 'first' | 'second';
   onGenerateTowers: () => void;
   onSelectBounds: () => void;
   onClearTowers: () => void;
@@ -21,6 +22,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   isLoading,
   error,
   isSelectingBounds,
+  selectionStep,
   onGenerateTowers,
   onSelectBounds,
   onClearTowers
@@ -47,6 +49,19 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   const safeDistance = nearestTower?.distance_km;
   const safeSignalStrength = safeNearestTower?.signal_strength ?? 0;
   const safeCoverageRadius = safeNearestTower?.coverage_radius_km ?? 1.0;
+
+  const getSelectionInstructions = () => {
+    if (!isSelectingBounds) return null;
+
+    switch (selectionStep) {
+      case 'first':
+        return 'Click on map to set first corner';
+      case 'second':
+        return 'Click on map to set second corner';
+      default:
+        return 'Click on map to start selection';
+    }
+  };
 
   return (
     <div className="info-panel">
@@ -80,7 +95,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
         <div>Loading: {isLoading ? 'YES' : 'NO'}</div>
         <div>Towers: {towers.length}</div>
         <div>Error: {error || 'None'}</div>
-        <div>Selecting: {isSelectingBounds ? 'YES' : 'NO'}</div>
+        <div>Selecting: {isSelectingBounds ? selectionStep.toUpperCase() : 'NO'}</div>
       </div>
 
       {/* Bounds Selection Mode */}
@@ -103,16 +118,23 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
           <p style={{
             color: '#2563eb',
             fontSize: '0.75rem',
-            marginBottom: '0.5rem'
+            marginBottom: '0.5rem',
+            fontWeight: '500'
           }}>
-            Click and drag on the map to select where towers should be generated
+            {getSelectionInstructions()}
           </p>
-          <p style={{
-            color: '#6b7280',
-            fontSize: '0.75rem'
+          <div style={{
+            color: '#1e40af',
+            fontSize: '0.75rem',
+            backgroundColor: '#f0f9ff',
+            padding: '0.5rem',
+            borderRadius: '0.25rem',
+            marginTop: '0.5rem'
           }}>
-            Press ESC to cancel
-          </p>
+            <div>📍 Step 1: Click first corner</div>
+            <div>📍 Step 2: Click second corner</div>
+            <div>⌨️ Press ESC to cancel</div>
+          </div>
         </div>
       )}
 
@@ -138,7 +160,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
           }}
         >
           {isSelectingBounds ? (
-            <>🎯 Selecting Area...</>
+            <>🎯 Selecting Area... ({selectionStep})</>
           ) : (
             <>📍 Select Generation Area</>
           )}
@@ -300,7 +322,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                   fontWeight: '500',
                   color: safeNearestTower.is_in_coverage ? '#059669' : '#d97706'
                 }}>
-                  {safeDistance.toFixed(2)} km
+                  {(safeDistance * 1000).toFixed(0)}m
                 </span>
               </div>
             )}
@@ -320,7 +342,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
               marginBottom: '0.25rem'
             }}>
               <span style={{ color: '#6b7280' }}>Coverage:</span>
-              <span style={{ fontWeight: '500' }}>{safeCoverageRadius.toFixed(2)} km</span>
+              <span style={{ fontWeight: '500' }}>{(safeCoverageRadius * 1000).toFixed(0)}m</span>
             </div>
 
             <div style={{
@@ -398,7 +420,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
             fontSize: '0.75rem',
             marginTop: '0.25rem'
           }}>
-            Coverage zones: 0.3-2.0 km radius
+            Coverage zones: 300-2000m radius
           </p>
         </div>
       )}
@@ -447,9 +469,10 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
             fontSize: '0.75rem',
             marginTop: '0.25rem'
           }}>
-            1. Select generation area on map<br/>
-            2. Generate towers in that area<br/>
-            3. Click to find nearest tower
+            1. Click "Select Generation Area"<br/>
+            2. Click two corners on map<br/>
+            3. Generate towers in that area<br/>
+            4. Click to find nearest tower
           </p>
         </div>
       )}

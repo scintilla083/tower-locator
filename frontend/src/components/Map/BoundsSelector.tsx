@@ -1,5 +1,5 @@
 // frontend/src/components/Map/BoundsSelector.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Rectangle, useMapEvents } from 'react-leaflet';
 import { LatLngBounds } from 'leaflet';
 
@@ -14,70 +14,95 @@ const BoundsSelector: React.FC<BoundsSelectorProps> = ({
   onBoundsSelected,
   onCancel
 }) => {
-  const [startPoint, setStartPoint] = useState<[number, number] | null>(null);
-  const [endPoint, setEndPoint] = useState<[number, number] | null>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const [firstClick, setFirstClick] = useState<[number, number] | null>(null);
+  const [secondClick, setSecondClick] = useState<[number, number] | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+
+  // Reset state when component becomes inactive
+  useEffect(() => {
+    if (!isActive) {
+      setFirstClick(null);
+      setSecondClick(null);
+      setShowPreview(false);
+    }
+  }, [isActive]);
 
   useMapEvents({
-    mousedown: (e) => {
+    click: (e) => {
       if (!isActive) return;
 
-      console.log('Mouse down at:', e.latlng);
-      setStartPoint([e.latlng.lat, e.latlng.lng]);
-      setEndPoint([e.latlng.lat, e.latlng.lng]);
-      setIsDrawing(true);
-    },
-    mousemove: (e) => {
-      if (!isActive || !isDrawing || !startPoint) return;
+      console.log('Bounds selector click:', e.latlng);
 
-      setEndPoint([e.latlng.lat, e.latlng.lng]);
-    },
-    mouseup: (e) => {
-      if (!isActive || !isDrawing || !startPoint) return;
+      if (!firstClick) {
+        // First click - set corner
+        console.log('First corner selected:', e.latlng);
+        setFirstClick([e.latlng.lat, e.latlng.lng]);
+        setShowPreview(false);
+      } else if (!secondClick) {
+        // Second click - complete selection
+        const secondPoint: [number, number] = [e.latlng.lat, e.latlng.lng];
+        console.log('Second corner selected:', e.latlng);
+        setSecondClick(secondPoint);
 
-      console.log('Mouse up at:', e.latlng);
-      const finalEndPoint: [number, number] = [e.latlng.lat, e.latlng.lng];
-      setEndPoint(finalEndPoint);
-      setIsDrawing(false);
+        // Calculate bounds
+        const bounds = {
+          north: Math.max(firstClick[0], secondPoint[0]),
+          south: Math.min(firstClick[0], secondPoint[0]),
+          east: Math.max(firstClick[1], secondPoint[1]),
+          west: Math.min(firstClick[1], secondPoint[1])
+        };
 
-      // Calculate bounds
-      const bounds = {
-        north: Math.max(startPoint[0], finalEndPoint[0]),
-        south: Math.min(startPoint[0], finalEndPoint[0]),
-        east: Math.max(startPoint[1], finalEndPoint[1]),
-        west: Math.min(startPoint[1], finalEndPoint[1])
-      };
+        console.log('Final bounds calculated:', bounds);
 
-      console.log('Selected bounds:', bounds);
-      onBoundsSelected(bounds);
-
-      // Reset state
-      setStartPoint(null);
-      setEndPoint(null);
+        // Show preview for 1 second, then confirm
+        setShowPreview(true);
+        setTimeout(() => {
+          onBoundsSelected(bounds);
+        }, 1000);
+      }
     },
     keydown: (e) => {
       if (e.originalEvent.key === 'Escape') {
+        console.log('Bounds selection cancelled with ESC');
         onCancel();
-        setStartPoint(null);
-        setEndPoint(null);
-        setIsDrawing(false);
       }
     }
   });
 
-  // Show rectangle if we have both points
-  if (isActive && startPoint && endPoint) {
-    const bounds = new LatLngBounds(startPoint, endPoint);
+  // Show preview rectangle if we have both points or are showing final preview
+  if (isActive && firstClick && (secondClick || showPreview)) {
+    const bounds = new LatLngBounds(firstClick, secondClick || firstClick);
 
     return (
       <Rectangle
         bounds={bounds}
         pathOptions={{
-          color: '#3b82f6',
-          fillColor: '#3b82f6',
-          fillOpacity: 0.2,
-          weight: 2,
-          dashArray: '5, 5'
+          color: showPreview ? '#10b981' : '#3b82f6',
+          fillColor: showPreview ? '#10b981' : '#3b82f6',
+          fillOpacity: showPreview ? 0.3 : 0.2,
+          weight: showPreview ? 3 : 2,
+          dashArray: showPreview ? undefined : '5, 5'
+        }}
+      />
+    );
+  }
+
+  // Show first click marker
+  if (isActive && firstClick && !secondClick) {
+    // Create a small circle around first click
+    const smallBounds = new LatLngBounds(
+      [firstClick[0] - 0.001, firstClick[1] - 0.001],
+      [firstClick[0] + 0.001, firstClick[1] + 0.001]
+    );
+
+    return (
+      <Rectangle
+        bounds={smallBounds}
+        pathOptions={{
+          color: '#f59e0b',
+          fillColor: '#f59e0b',
+          fillOpacity: 0.5,
+          weight: 2
         }}
       />
     );
