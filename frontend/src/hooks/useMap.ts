@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+// frontend/src/hooks/useMap.ts
+import { useState, useCallback, useRef } from 'react';
 import { Tower, LocationQuery, NearestTowerResponse, MapPosition } from '../types';
 import ApiService from '../services/api';
 
@@ -24,13 +25,25 @@ export const useMap = (): UseMapReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Use ref to prevent duplicate requests
+  const loadingRef = useRef(false);
+
   const setUserPosition = useCallback((position: MapPosition) => {
+    console.log('Setting user position:', position);
     setUserPositionState(position);
     setNearestTower(null);
+    setError(null);
   }, []);
 
   const findNearestTower = useCallback(async (position: MapPosition) => {
+    if (loadingRef.current) {
+      console.log('Request already in progress, skipping...');
+      return;
+    }
+
+    console.log('Finding nearest tower for position:', position);
     setIsLoading(true);
+    loadingRef.current = true;
     setError(null);
 
     try {
@@ -41,16 +54,24 @@ export const useMap = (): UseMapReturn => {
       };
 
       const result = await ApiService.findNearestTower(query);
+      console.log('Nearest tower found:', result);
       setNearestTower(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to find nearest tower');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to find nearest tower';
+      console.error('Error finding nearest tower:', err);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
+      loadingRef.current = false;
     }
   }, []);
 
   const loadTowersInArea = useCallback(async (bounds: any) => {
+    if (loadingRef.current) return;
+
+    console.log('Loading towers in area:', bounds);
     setIsLoading(true);
+    loadingRef.current = true;
     setError(null);
 
     try {
@@ -62,16 +83,27 @@ export const useMap = (): UseMapReturn => {
       };
 
       const towersData = await ApiService.getTowersInBounds(mapBounds);
+      console.log('Towers loaded:', towersData);
       setTowers(towersData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load towers');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load towers';
+      console.error('Error loading towers:', err);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
+      loadingRef.current = false;
     }
   }, []);
 
   const generateRandomTowers = useCallback(async (count: number, bounds: any) => {
+    if (loadingRef.current) {
+      console.log('Request already in progress, skipping generate towers...');
+      return;
+    }
+
+    console.log('Generating random towers:', { count, bounds });
     setIsLoading(true);
+    loadingRef.current = true;
     setError(null);
 
     try {
@@ -82,27 +114,54 @@ export const useMap = (): UseMapReturn => {
         west: bounds.getWest()
       };
 
+      console.log('Sending request with bounds:', mapBounds);
       const newTowers = await ApiService.generateRandomTowers(count, mapBounds);
-      setTowers(prev => [...prev, ...newTowers]);
+      console.log('Generated towers response:', newTowers);
+
+      if (Array.isArray(newTowers) && newTowers.length > 0) {
+        setTowers(prev => {
+          const updated = [...prev, ...newTowers];
+          console.log('Updated towers state:', updated);
+          return updated;
+        });
+        console.log(`Successfully generated ${newTowers.length} towers`);
+      } else {
+        console.warn('No towers were generated or invalid response:', newTowers);
+        setError('No towers were generated. Please try again.');
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate towers');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate towers';
+      console.error('Error generating towers:', err);
+      setError(errorMessage);
     } finally {
+      console.log('Generate towers completed, setting loading to false');
       setIsLoading(false);
+      loadingRef.current = false;
     }
   }, []);
 
   const clearAllTowers = useCallback(async () => {
+    if (loadingRef.current) return;
+
+    console.log('Clearing all towers...');
     setIsLoading(true);
+    loadingRef.current = true;
     setError(null);
 
     try {
       await ApiService.clearAllTowers();
       setTowers([]);
       setNearestTower(null);
+      setUserPositionState(null);
+
+      console.log('Successfully cleared all towers');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to clear towers');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to clear towers';
+      console.error('Error clearing towers:', err);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
+      loadingRef.current = false;
     }
   }, []);
 

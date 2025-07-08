@@ -1,3 +1,4 @@
+# backend/app/repositories/tower_repository.py
 from typing import List, Optional
 import random
 from sqlalchemy.orm import Session
@@ -33,6 +34,8 @@ class TowerRepository(BaseRepository[Tower]):
         if query:
             tower, distance = query
             tower.distance_km = distance / 1000  # Convert to km
+            # Check if user is within coverage zone
+            tower.is_in_coverage = tower.distance_km <= tower.coverage_radius_km
             return tower
         return None
 
@@ -50,6 +53,7 @@ class TowerRepository(BaseRepository[Tower]):
             lat = bounds.south + (bounds.north - bounds.south) * random.random()
             lon = bounds.west + (bounds.east - bounds.west) * random.random()
             signal_strength = 75.0 + 25.0 * random.random()
+            coverage_radius = 2.0 + 8.0 * random.random()  # Random coverage 2-10 km
 
             tower_data = {
                 'name': f'Tower_{i + 1}',
@@ -57,6 +61,7 @@ class TowerRepository(BaseRepository[Tower]):
                 'longitude': lon,
                 'signal_strength': signal_strength,
                 'tower_type': '4G',
+                'coverage_radius_km': coverage_radius,
                 'location': func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326)
             }
             tower = self.create(tower_data)

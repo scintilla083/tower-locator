@@ -1,55 +1,221 @@
-/* App.css */
+/* frontend/src/App.css */
 .App {
-  text-align: center;
   height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* Ensure control panel is always visible */
-.control-panel {
-  position: absolute !important;
-  top: 1rem !important;
-  left: 1rem !important;
-  z-index: 1000 !important;
-  background: white !important;
-  padding: 1rem !important;
-  border-radius: 0.5rem !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
-  border: 1px solid #e5e7eb !important;
-  min-width: 200px;
-}
-
-/* Make sure map doesn't cover controls */
+/* Map container styles */
 .leaflet-container {
   height: 100% !important;
   width: 100% !important;
+  cursor: crosshair !important;
 }
 
-/* Leaflet control positioning fix */
+/* Info panel positioning - FIXED */
+.info-panel {
+  position: absolute !important;
+  top: 16px !important;
+  left: 16px !important;
+  z-index: 1000 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  padding: 16px !important;
+  min-width: 320px !important;
+  max-width: 400px !important;
+  max-height: calc(100vh - 32px) !important;
+  overflow-y: auto !important;
+}
+
+/* Custom marker styles */
+.custom-tower-marker {
+  background: none !important;
+  border: none !important;
+}
+
+.custom-user-marker {
+  background: none !important;
+  border: none !important;
+}
+
+/* Smooth transitions for all interactive elements */
+.leaflet-marker-icon,
+.leaflet-popup {
+  transition: all 0.3s ease !important;
+}
+
+/* Popup customization */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+}
+
+.leaflet-popup-tip {
+  background: white !important;
+}
+
+/* Control positioning to avoid overlap with info panel */
 .leaflet-top.leaflet-left {
-  top: 200px !important;
+  top: 380px !important;
 }
 
-/* Button styles */
-.control-panel button {
-  width: 100%;
-  min-height: 40px;
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
+.leaflet-top.leaflet-right {
+  top: 10px !important;
 }
 
-.control-panel button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+/* Loading animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-/* Status messages */
-.status-message {
-  padding: 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  margin-top: 0.5rem;
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Pulse animation for nearest tower */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 currentColor;
+    opacity: 1;
+  }
+  70% {
+    box-shadow: 0 0 0 10px transparent;
+    opacity: 0.7;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+    opacity: 0;
+  }
+}
+
+/* Ripple animation for user marker */
+@keyframes ripple {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.1;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* Smooth hover effects */
+button {
+  transition: all 0.2s ease !important;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+button:disabled {
+  transform: none !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
+/* Coverage circle animations */
+.leaflet-interactive {
+  transition: all 0.3s ease !important;
+}
+
+/* Scrollbar styling for info panel */
+.info-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.info-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.info-panel::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.info-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Header gradient fix */
+.bg-gradient-to-r {
+  background: linear-gradient(to right, #2563eb, #1d4ed8);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .info-panel {
+    position: fixed !important;
+    bottom: 16px !important;
+    top: auto !important;
+    left: 16px !important;
+    right: 16px !important;
+    min-width: auto !important;
+    max-width: none !important;
+    max-height: 50vh !important;
+  }
+
+  .leaflet-top.leaflet-left {
+    top: 10px !important;
+  }
+
+  .leaflet-control-zoom {
+    margin-top: 10px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .info-panel {
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 8px !important;
+  }
+}
+
+/* Fix for potential layout issues */
+* {
+  box-sizing: border-box;
+}
+
+/* Ensure main content takes full height */
+main {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Fix z-index issues */
+.leaflet-pane {
+  z-index: auto !important;
+}
+
+.leaflet-map-pane {
+  z-index: 1 !important;
+}
+
+.leaflet-control-container {
+  z-index: 800 !important;
+}
+
+/* Map cursor fix */
+.leaflet-grab {
+  cursor: crosshair !important;
+}
+
+.leaflet-grab:active {
+  cursor: crosshair !important;
 }

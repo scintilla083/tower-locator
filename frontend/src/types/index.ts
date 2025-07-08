@@ -7,7 +7,9 @@ export interface Tower {
   signal_strength: number;
   tower_type: string;
   is_active: boolean;
+  coverage_radius_km: number;
   distance_km?: number;
+  is_in_coverage?: boolean;
 }
 
 export interface TowerCreate {
@@ -17,6 +19,7 @@ export interface TowerCreate {
   signal_strength?: number;
   tower_type?: string;
   is_active?: boolean;
+  coverage_radius_km?: number;
 }
 
 export interface LocationQuery {

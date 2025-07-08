@@ -10,6 +10,7 @@ class TowerBase(BaseModel):
     signal_strength: float = Field(default=100.0, ge=0, le=100)
     tower_type: str = Field(default="4G")
     is_active: bool = Field(default=True)
+    coverage_radius_km: float = Field(default=5.0, ge=0.1, le=50.0)  # New field
 
 
 class TowerCreate(TowerBase):
@@ -21,3 +22,4 @@ class TowerResponse(TowerBase):
 
     id: int
     distance_km: Optional[float] = None
+    is_in_coverage: Optional[bool] = None  # New field

@@ -1,7 +1,12 @@
+// frontend/src/components/Map/MapContainer.tsx
 import React, { useState } from 'react';
-import { MapContainer as LeafletMap, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer as LeafletMap, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { useMap } from '../../hooks/useMap';
+import TowerMarker from './TowerMarker';
+import CoverageCircle from './CoverageCircle';
+import ConnectionLine from './ConnectionLine';
+import InfoPanel from '../UI/InfoPanel';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default markers
@@ -11,6 +16,51 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
+
+// Custom user marker icon
+const userIcon = L.divIcon({
+  html: `
+    <div style="
+      background-color: #dc2626;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      position: relative;
+    ">
+      <div style="
+        position: absolute;
+        top: -8px;
+        left: -8px;
+        width: 32px;
+        height: 32px;
+        border: 2px solid #dc2626;
+        border-radius: 50%;
+        opacity: 0.3;
+        animation: ripple 2s infinite;
+      "></div>
+    </div>
+    <style>
+      @keyframes ripple {
+        0% { transform: scale(0.8); opacity: 0.3; }
+        50% { transform: scale(1.2); opacity: 0.1; }
+        100% { transform: scale(1.6); opacity: 0; }
+      }
+    </style>
+  `,
+  className: 'custom-user-marker',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+});
+
+// Component to handle map click events
+function MapClickHandler({ onMapClick }: { onMapClick: (e: any) => void }) {
+  useMapEvents({
+    click: onMapClick,
+  });
+  return null;
+}
 
 const MapContainer: React.FC = () => {
   const [mapCenter] = useState<[number, number]>([50.4501, 30.5234]); // Kyiv
@@ -27,93 +77,121 @@ const MapContainer: React.FC = () => {
   } = useMap();
 
   const handleMapClick = async (e: any) => {
+    console.log('Map clicked:', e.latlng); // Debug log
     const position = { lat: e.latlng.lat, lng: e.latlng.lng };
     setUserPosition(position);
     await findNearestTower(position);
   };
 
   const handleGenerateTowers = async () => {
+    console.log('Generating towers...'); // Debug log
     const bounds = {
       getNorth: () => mapCenter[0] + 0.1,
       getSouth: () => mapCenter[0] - 0.1,
-      getEast: () => mapCenter[1] + 0.1,
-      getWest: () => mapCenter[1] - 0.1
+      getEast: () => mapCenter[1] + 0.15,
+      getWest: () => mapCenter[1] - 0.15
     };
     await generateRandomTowers(20, bounds);
   };
 
   const handleClearTowers = async () => {
+    console.log('Clearing towers...'); // Debug log
     await clearAllTowers();
   };
 
   return (
-    <div className="relative h-full">
-      <div className="control-panel">
-        <div className="flex flex-col gap-2 mb-3">
-          <button
-            onClick={handleGenerateTowers}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 text-sm font-medium"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Загрузка...' : 'Создать 20 вышек'}
-          </button>
+    <div style={{ position: 'relative', height: '100%', width: '100%' }}>
+      {/* Information Panel */}
+      <InfoPanel
+        towers={towers}
+        nearestTower={nearestTower}
+        userPosition={userPosition}
+        isLoading={isLoading}
+        error={error}
+        onGenerateTowers={handleGenerateTowers}
+        onClearTowers={handleClearTowers}
+      />
 
-          <button
-            onClick={handleClearTowers}
-            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50 text-sm font-medium"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Загрузка...' : 'Очистить все'}
-          </button>
-        </div>
-
-        {error && (
-          <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded text-red-700 text-xs">
-            {error}
-          </div>
-        )}
-
-        {towers.length > 0 && (
-          <div className="mt-2 p-2 bg-blue-100 border border-blue-300 rounded text-blue-700 text-xs">
-            Всего вышек: {towers.length}
-          </div>
-        )}
-
-        {nearestTower && (
-          <div className="mt-2 p-2 bg-green-100 border border-green-300 rounded text-green-700 text-xs">
-            Ближайшая: {nearestTower.tower.name} ({nearestTower.distance_km.toFixed(2)} км)
-          </div>
-        )}
-      </div>
-
+      {/* Map */}
       <LeafletMap
         center={mapCenter}
-        zoom={10}
-        className="h-full w-full"
-        onClick={handleMapClick}
+        zoom={11}
+        style={{ height: '100%', width: '100%', cursor: 'crosshair' }}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
 
+        {/* Map click handler */}
+        <MapClickHandler onMapClick={handleMapClick} />
+
+        {/* Coverage Circles */}
         {towers.map((tower) => (
-          <Marker key={tower.id} position={[tower.latitude, tower.longitude]}>
+          <CoverageCircle
+            key={`coverage-${tower.id}`}
+            center={[tower.latitude, tower.longitude]}
+            radiusKm={tower.coverage_radius_km}
+            isUserInCoverage={
+              nearestTower?.tower.id === tower.id &&
+              nearestTower.tower.is_in_coverage === true
+            }
+          />
+        ))}
+
+        {/* Tower Markers */}
+        {towers.map((tower) => (
+          <TowerMarker
+            key={tower.id}
+            tower={tower}
+            isNearest={nearestTower?.tower.id === tower.id}
+            isInCoverage={
+              nearestTower?.tower.id === tower.id &&
+              nearestTower.tower.is_in_coverage === true
+            }
+          />
+        ))}
+
+        {/* User Position Marker */}
+        {userPosition && (
+          <Marker
+            position={[userPosition.lat, userPosition.lng]}
+            icon={userIcon}
+          >
             <Popup>
-              <div>
-                <h3>{tower.name}</h3>
-                <p>Type: {tower.tower_type}</p>
-                <p>Signal: {tower.signal_strength.toFixed(1)}%</p>
-                <p>Coords: {tower.latitude.toFixed(4)}, {tower.longitude.toFixed(4)}</p>
+              <div style={{ padding: '0.5rem' }}>
+                <h3 style={{ fontWeight: 'bold', color: '#1f2937', marginBottom: '0.25rem' }}>
+                  Your Location
+                </h3>
+                <p style={{
+                  fontSize: '0.875rem',
+                  color: '#6b7280',
+                  fontFamily: 'monospace'
+                }}>
+                  {userPosition.lat.toFixed(6)}, {userPosition.lng.toFixed(6)}
+                </p>
+                {nearestTower && (
+                  <p style={{
+                    fontSize: '0.75rem',
+                    marginTop: '0.5rem',
+                    fontWeight: '500',
+                    color: nearestTower.tower.is_in_coverage ? '#059669' : '#d97706'
+                  }}>
+                    {nearestTower.tower.is_in_coverage ? '✅ In Coverage' : '⚠️ Outside Coverage'}
+                  </p>
+                )}
               </div>
             </Popup>
           </Marker>
-        ))}
+        )}
 
-        {userPosition && (
-          <Marker position={[userPosition.lat, userPosition.lng]}>
-            <Popup>Your Location</Popup>
-          </Marker>
+        {/* Connection Line */}
+        {userPosition && nearestTower && (
+          <ConnectionLine
+            start={[userPosition.lat, userPosition.lng]}
+            end={[nearestTower.tower.latitude, nearestTower.tower.longitude]}
+            isInCoverage={nearestTower.tower.is_in_coverage === true}
+          />
         )}
       </LeafletMap>
     </div>
