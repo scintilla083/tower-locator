@@ -14,7 +14,17 @@ L.Icon.Default.mergeOptions({
 
 const MapContainer: React.FC = () => {
   const [mapCenter] = useState<[number, number]>([50.4501, 30.5234]); // Kyiv
-  const { towers, userPosition, nearestTower, isLoading, error, setUserPosition, findNearestTower, generateRandomTowers } = useMap();
+  const {
+    towers,
+    userPosition,
+    nearestTower,
+    isLoading,
+    error,
+    setUserPosition,
+    findNearestTower,
+    generateRandomTowers,
+    clearAllTowers
+  } = useMap();
 
   const handleMapClick = async (e: any) => {
     const position = { lat: e.latlng.lat, lng: e.latlng.lng };
@@ -32,22 +42,46 @@ const MapContainer: React.FC = () => {
     await generateRandomTowers(20, bounds);
   };
 
+  const handleClearTowers = async () => {
+    await clearAllTowers();
+  };
+
   return (
     <div className="relative h-full">
-      <div className="absolute top-4 left-4 z-1000 bg-white p-4 rounded shadow">
-        <button
-          onClick={handleGenerateTowers}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Loading...' : 'Generate Random Towers'}
-        </button>
+      <div className="control-panel">
+        <div className="flex flex-col gap-2 mb-3">
+          <button
+            onClick={handleGenerateTowers}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 text-sm font-medium"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Загрузка...' : 'Создать 20 вышек'}
+          </button>
+
+          <button
+            onClick={handleClearTowers}
+            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50 text-sm font-medium"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Загрузка...' : 'Очистить все'}
+          </button>
+        </div>
+
         {error && (
-          <div className="mt-2 text-red-600 text-sm">{error}</div>
+          <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded text-red-700 text-xs">
+            {error}
+          </div>
         )}
+
+        {towers.length > 0 && (
+          <div className="mt-2 p-2 bg-blue-100 border border-blue-300 rounded text-blue-700 text-xs">
+            Всего вышек: {towers.length}
+          </div>
+        )}
+
         {nearestTower && (
-          <div className="mt-2 text-green-600 text-sm">
-            Nearest tower: {nearestTower.tower.name} ({nearestTower.distance_km.toFixed(2)} km)
+          <div className="mt-2 p-2 bg-green-100 border border-green-300 rounded text-green-700 text-xs">
+            Ближайшая: {nearestTower.tower.name} ({nearestTower.distance_km.toFixed(2)} км)
           </div>
         )}
       </div>
@@ -69,7 +103,8 @@ const MapContainer: React.FC = () => {
               <div>
                 <h3>{tower.name}</h3>
                 <p>Type: {tower.tower_type}</p>
-                <p>Signal: {tower.signal_strength}%</p>
+                <p>Signal: {tower.signal_strength.toFixed(1)}%</p>
+                <p>Coords: {tower.latitude.toFixed(4)}, {tower.longitude.toFixed(4)}</p>
               </div>
             </Popup>
           </Marker>

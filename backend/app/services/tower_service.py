@@ -1,4 +1,5 @@
 from typing import List, Optional
+from sqlalchemy import func
 from ..repositories.tower_repository import TowerRepository
 from ..schemas.tower import TowerCreate, TowerResponse
 from ..schemas.location import LocationQuery, NearestTowerResponse, MapBounds
@@ -11,7 +12,7 @@ class TowerService:
 
     def create_tower(self, tower_data: TowerCreate) -> TowerResponse:
         tower_dict = tower_data.dict()
-        tower_dict['location'] = f'POINT({tower_data.longitude} {tower_data.latitude})'
+        tower_dict['location'] = func.ST_SetSRID(func.ST_MakePoint(tower_data.longitude, tower_data.latitude), 4326)
 
         tower = self.tower_repository.create(tower_dict)
         return TowerResponse.from_orm(tower)
@@ -38,3 +39,7 @@ class TowerService:
     def initialize_random_towers(self, count: int, bounds: MapBounds) -> List[TowerResponse]:
         towers = self.tower_repository.generate_random_towers(count, bounds)
         return [TowerResponse.from_orm(tower) for tower in towers]
+
+    def clear_all_towers(self) -> int:
+        """Delete all towers and return count of deleted towers"""
+        return self.tower_repository.delete_all_towers()

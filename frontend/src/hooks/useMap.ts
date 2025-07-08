@@ -13,6 +13,7 @@ export interface UseMapReturn {
   findNearestTower: (position: MapPosition) => Promise<void>;
   loadTowersInArea: (bounds: any) => Promise<void>;
   generateRandomTowers: (count: number, bounds: any) => Promise<void>;
+  clearAllTowers: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -90,6 +91,21 @@ export const useMap = (): UseMapReturn => {
     }
   }, []);
 
+  const clearAllTowers = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await ApiService.clearAllTowers();
+      setTowers([]);
+      setNearestTower(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to clear towers');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const clearError = useCallback(() => {
     setError(null);
   }, []);
@@ -104,6 +120,7 @@ export const useMap = (): UseMapReturn => {
     findNearestTower,
     loadTowersInArea,
     generateRandomTowers,
+    clearAllTowers,
     clearError
   };
 };

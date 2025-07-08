@@ -27,6 +27,11 @@ class ApiService {
     const response = await axios.post(`${this.baseURL}/towers/generate-random/${count}`, bounds);
     return response.data;
   }
+
+  async clearAllTowers(): Promise<{ message: string }> {
+    const response = await axios.delete(`${this.baseURL}/towers/clear-all`);
+    return response.data;
+  }
 }
 
 export default new ApiService();

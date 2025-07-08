@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+# backend/app/schemas/tower.py
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 
 
@@ -16,8 +17,7 @@ class TowerCreate(TowerBase):
 
 
 class TowerResponse(TowerBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     distance_km: Optional[float] = None
-
-    class Config:
-        from_attributes = True

@@ -47,3 +47,11 @@ def generate_random_towers(
     if count > 1000:
         raise HTTPException(status_code=400, detail="Maximum 1000 towers allowed")
     return tower_service.initialize_random_towers(count, bounds)
+
+@router.delete("/clear-all")
+def clear_all_towers(
+    tower_service: TowerService = Depends(get_tower_service)
+):
+    """Delete all towers from the database"""
+    count = tower_service.clear_all_towers()
+    return {"message": f"Successfully deleted {count} towers"}

@@ -1,4 +1,5 @@
 from typing import List, Optional
+import random
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from geoalchemy2 import functions
@@ -45,17 +46,26 @@ class TowerRepository(BaseRepository[Tower]):
     def generate_random_towers(self, count: int, bounds: MapBounds) -> List[Tower]:
         towers = []
         for i in range(count):
-            # Random coordinates within bounds
-            lat = bounds.south + (bounds.north - bounds.south) * func.random()
-            lon = bounds.west + (bounds.east - bounds.west) * func.random()
+            # Generate random coordinates within bounds using Python's random module
+            lat = bounds.south + (bounds.north - bounds.south) * random.random()
+            lon = bounds.west + (bounds.east - bounds.west) * random.random()
+            signal_strength = 75.0 + 25.0 * random.random()
 
             tower_data = {
                 'name': f'Tower_{i + 1}',
                 'latitude': lat,
                 'longitude': lon,
-                'signal_strength': 75.0 + 25.0 * func.random(),
+                'signal_strength': signal_strength,
                 'tower_type': '4G',
                 'location': func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326)
             }
-            towers.append(self.create(tower_data))
+            tower = self.create(tower_data)
+            towers.append(tower)
         return towers
+
+    def delete_all_towers(self) -> int:
+        """Delete all towers and return count of deleted towers"""
+        count = self.db.query(Tower).count()
+        self.db.query(Tower).delete()
+        self.db.commit()
+        return count
