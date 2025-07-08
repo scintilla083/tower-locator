@@ -8,7 +8,9 @@ interface InfoPanelProps {
   userPosition: { lat: number; lng: number } | null;
   isLoading: boolean;
   error: string | null;
+  isSelectingBounds: boolean;
   onGenerateTowers: () => void;
+  onSelectBounds: () => void;
   onClearTowers: () => void;
 }
 
@@ -18,7 +20,9 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   userPosition,
   isLoading,
   error,
+  isSelectingBounds,
   onGenerateTowers,
+  onSelectBounds,
   onClearTowers
 }) => {
   console.log('InfoPanel render:', { towers: towers.length, isLoading, error, nearestTower });
@@ -26,6 +30,11 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   const handleGenerateTowers = () => {
     console.log('Generate towers button clicked');
     onGenerateTowers();
+  };
+
+  const handleSelectBounds = () => {
+    console.log('Select bounds button clicked');
+    onSelectBounds();
   };
 
   const handleClearTowers = () => {
@@ -37,7 +46,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   const safeNearestTower = nearestTower?.tower;
   const safeDistance = nearestTower?.distance_km;
   const safeSignalStrength = safeNearestTower?.signal_strength ?? 0;
-  const safeCoverageRadius = safeNearestTower?.coverage_radius_km ?? 5.0;
+  const safeCoverageRadius = safeNearestTower?.coverage_radius_km ?? 1.0;
 
   return (
     <div className="info-panel">
@@ -71,14 +80,73 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
         <div>Loading: {isLoading ? 'YES' : 'NO'}</div>
         <div>Towers: {towers.length}</div>
         <div>Error: {error || 'None'}</div>
-        <div>Nearest: {nearestTower ? 'Found' : 'None'}</div>
+        <div>Selecting: {isSelectingBounds ? 'YES' : 'NO'}</div>
       </div>
+
+      {/* Bounds Selection Mode */}
+      {isSelectingBounds && (
+        <div style={{
+          marginBottom: '1rem',
+          padding: '0.75rem',
+          backgroundColor: '#dbeafe',
+          border: '2px solid #3b82f6',
+          borderRadius: '0.375rem'
+        }}>
+          <p style={{
+            color: '#1d4ed8',
+            fontSize: '0.875rem',
+            fontWeight: '600',
+            marginBottom: '0.5rem'
+          }}>
+            🎯 Select Generation Area
+          </p>
+          <p style={{
+            color: '#2563eb',
+            fontSize: '0.75rem',
+            marginBottom: '0.5rem'
+          }}>
+            Click and drag on the map to select where towers should be generated
+          </p>
+          <p style={{
+            color: '#6b7280',
+            fontSize: '0.75rem'
+          }}>
+            Press ESC to cancel
+          </p>
+        </div>
+      )}
 
       {/* Controls */}
       <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         <button
+          onClick={handleSelectBounds}
+          disabled={isLoading || isSelectingBounds}
+          style={{
+            width: '100%',
+            backgroundColor: isSelectingBounds ? '#1d4ed8' : (isLoading ? '#93c5fd' : '#3b82f6'),
+            color: 'white',
+            padding: '0.75rem 1rem',
+            borderRadius: '0.375rem',
+            fontWeight: '500',
+            border: isSelectingBounds ? '2px solid #1e40af' : 'none',
+            cursor: isLoading || isSelectingBounds ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            opacity: isLoading ? 0.7 : 1
+          }}
+        >
+          {isSelectingBounds ? (
+            <>🎯 Selecting Area...</>
+          ) : (
+            <>📍 Select Generation Area</>
+          )}
+        </button>
+
+        <button
           onClick={handleGenerateTowers}
-          disabled={isLoading}
+          disabled={isLoading || isSelectingBounds}
           style={{
             width: '100%',
             backgroundColor: isLoading ? '#93c5fd' : '#2563eb',
@@ -87,12 +155,12 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
             borderRadius: '0.375rem',
             fontWeight: '500',
             border: 'none',
-            cursor: isLoading ? 'not-allowed' : 'pointer',
+            cursor: isLoading || isSelectingBounds ? 'not-allowed' : 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '0.5rem',
-            opacity: isLoading ? 0.7 : 1
+            opacity: isLoading || isSelectingBounds ? 0.7 : 1
           }}
         >
           {isLoading ? (
@@ -114,17 +182,17 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
 
         <button
           onClick={handleClearTowers}
-          disabled={isLoading}
+          disabled={isLoading || isSelectingBounds}
           style={{
             width: '100%',
-            backgroundColor: isLoading ? '#fca5a5' : '#dc2626',
+            backgroundColor: isLoading || isSelectingBounds ? '#fca5a5' : '#dc2626',
             color: 'white',
             padding: '0.75rem 1rem',
             borderRadius: '0.375rem',
             fontWeight: '500',
             border: 'none',
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            opacity: isLoading ? 0.7 : 1
+            cursor: isLoading || isSelectingBounds ? 'not-allowed' : 'pointer',
+            opacity: isLoading || isSelectingBounds ? 0.7 : 1
           }}
         >
           🗑️ Clear All Towers
@@ -252,7 +320,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
               marginBottom: '0.25rem'
             }}>
               <span style={{ color: '#6b7280' }}>Coverage:</span>
-              <span style={{ fontWeight: '500' }}>{safeCoverageRadius.toFixed(1)} km</span>
+              <span style={{ fontWeight: '500' }}>{safeCoverageRadius.toFixed(2)} km</span>
             </div>
 
             <div style={{
@@ -325,11 +393,18 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
           }}>
             ✅ {towers.length} towers loaded successfully!
           </p>
+          <p style={{
+            color: '#065f46',
+            fontSize: '0.75rem',
+            marginTop: '0.25rem'
+          }}>
+            Coverage zones: 0.3-2.0 km radius
+          </p>
         </div>
       )}
 
       {/* Instructions */}
-      {!userPosition && towers.length > 0 && !isLoading && (
+      {!userPosition && towers.length > 0 && !isLoading && !isSelectingBounds && (
         <div style={{
           padding: '0.75rem',
           backgroundColor: '#eff6ff',
@@ -353,7 +428,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
         </div>
       )}
 
-      {towers.length === 0 && !isLoading && !error && (
+      {towers.length === 0 && !isLoading && !error && !isSelectingBounds && (
         <div style={{
           padding: '0.75rem',
           backgroundColor: '#f9fafb',
@@ -372,7 +447,9 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
             fontSize: '0.75rem',
             marginTop: '0.25rem'
           }}>
-            Generate some towers to begin exploring coverage areas
+            1. Select generation area on map<br/>
+            2. Generate towers in that area<br/>
+            3. Click to find nearest tower
           </p>
         </div>
       )}

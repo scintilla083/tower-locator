@@ -13,5 +13,5 @@ class Tower(BaseModel):
     signal_strength = Column(Float, default=100.0)
     is_active = Column(Boolean, default=True)
     tower_type = Column(String(50), default="4G")
-    coverage_radius_km = Column(Float, default=5.0)  # New field
+    coverage_radius_km = Column(Float, default=1.0)  # Reduced from 5.0 to 1.0
     location = Column(Geometry('POINT', srid=4326), nullable=False)

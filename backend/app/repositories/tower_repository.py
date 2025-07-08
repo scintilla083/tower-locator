@@ -53,7 +53,8 @@ class TowerRepository(BaseRepository[Tower]):
             lat = bounds.south + (bounds.north - bounds.south) * random.random()
             lon = bounds.west + (bounds.east - bounds.west) * random.random()
             signal_strength = 75.0 + 25.0 * random.random()
-            coverage_radius = 2.0 + 8.0 * random.random()  # Random coverage 2-10 km
+            # Smaller coverage radius: 0.3-2.0 km instead of 2-10 km
+            coverage_radius = 0.3 + 1.7 * random.random()
 
             tower_data = {
                 'name': f'Tower_{i + 1}',

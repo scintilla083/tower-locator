@@ -6,6 +6,7 @@ import { useMap } from '../../hooks/useMap';
 import TowerMarker from './TowerMarker';
 import CoverageCircle from './CoverageCircle';
 import ConnectionLine from './ConnectionLine';
+import BoundsSelector from './BoundsSelector';
 import InfoPanel from '../UI/InfoPanel';
 import 'leaflet/dist/leaflet.css';
 
@@ -55,15 +56,30 @@ const userIcon = L.divIcon({
 });
 
 // Component to handle map click events
-function MapClickHandler({ onMapClick }: { onMapClick: (e: any) => void }) {
+function MapClickHandler({
+  onMapClick,
+  isSelectingBounds
+}: {
+  onMapClick: (e: any) => void;
+  isSelectingBounds: boolean;
+}) {
   useMapEvents({
-    click: onMapClick,
+    click: (e) => {
+      if (!isSelectingBounds) {
+        onMapClick(e);
+      }
+    },
   });
   return null;
 }
 
 const MapContainer: React.FC = () => {
   const [mapCenter] = useState<[number, number]>([50.4501, 30.5234]); // Kyiv
+  const [isSelectingBounds, setIsSelectingBounds] = useState(false);
+  const [selectedBounds, setSelectedBounds] = useState<{
+    north: number; south: number; east: number; west: number;
+  } | null>(null);
+
   const {
     towers,
     userPosition,
@@ -77,46 +93,120 @@ const MapContainer: React.FC = () => {
   } = useMap();
 
   const handleMapClick = async (e: any) => {
-    console.log('Map clicked:', e.latlng); // Debug log
-    const position = { lat: e.latlng.lat, lng: e.latlng.lng };
-    setUserPosition(position);
-    await findNearestTower(position);
+    try {
+      console.log('Map clicked:', e.latlng);
+      if (!e.latlng || typeof e.latlng.lat !== 'number' || typeof e.latlng.lng !== 'number') {
+        console.error('Invalid click coordinates:', e.latlng);
+        return;
+      }
+
+      const position = { lat: e.latlng.lat, lng: e.latlng.lng };
+      setUserPosition(position);
+      await findNearestTower(position);
+    } catch (error) {
+      console.error('Error handling map click:', error);
+    }
+  };
+
+  const handleSelectBounds = () => {
+    console.log('Starting bounds selection...');
+    setIsSelectingBounds(true);
+    setSelectedBounds(null);
+  };
+
+  const handleBoundsSelected = (bounds: { north: number; south: number; east: number; west: number }) => {
+    console.log('Bounds selected:', bounds);
+    setSelectedBounds(bounds);
+    setIsSelectingBounds(false);
+  };
+
+  const handleCancelBoundsSelection = () => {
+    console.log('Bounds selection cancelled');
+    setIsSelectingBounds(false);
+    setSelectedBounds(null);
   };
 
   const handleGenerateTowers = async () => {
-    console.log('Generating towers...'); // Debug log
-    const bounds = {
-      getNorth: () => mapCenter[0] + 0.1,
-      getSouth: () => mapCenter[0] - 0.1,
-      getEast: () => mapCenter[1] + 0.15,
-      getWest: () => mapCenter[1] - 0.15
-    };
-    await generateRandomTowers(20, bounds);
+    try {
+      console.log('Generating towers...');
+
+      let bounds;
+      if (selectedBounds) {
+        // Use selected bounds
+        bounds = {
+          getNorth: () => selectedBounds.north,
+          getSouth: () => selectedBounds.south,
+          getEast: () => selectedBounds.east,
+          getWest: () => selectedBounds.west
+        };
+        console.log('Using selected bounds:', selectedBounds);
+      } else {
+        // Use default bounds around map center
+        bounds = {
+          getNorth: () => mapCenter[0] + 0.05, // Smaller default area
+          getSouth: () => mapCenter[0] - 0.05,
+          getEast: () => mapCenter[1] + 0.075,
+          getWest: () => mapCenter[1] - 0.075
+        };
+        console.log('Using default bounds around center');
+      }
+
+      await generateRandomTowers(20, bounds);
+    } catch (error) {
+      console.error('Error generating towers:', error);
+    }
   };
 
   const handleClearTowers = async () => {
-    console.log('Clearing towers...'); // Debug log
-    await clearAllTowers();
+    try {
+      console.log('Clearing towers...');
+      await clearAllTowers();
+      setSelectedBounds(null); // Clear selected bounds too
+    } catch (error) {
+      console.error('Error clearing towers:', error);
+    }
   };
 
+  // Safe access to towers array
+  const safeTowers = Array.isArray(towers) ? towers : [];
+
+  // Safe access to user position
+  const safeUserPosition = userPosition &&
+    typeof userPosition.lat === 'number' &&
+    typeof userPosition.lng === 'number' ? userPosition : null;
+
+  // Safe access to nearest tower
+  const safeNearestTower = nearestTower?.tower;
+
   return (
-    <div style={{ position: 'relative', height: '100%', width: '100%' }}>
+    <div style={{
+      position: 'relative',
+      height: '100%',
+      width: '100%',
+      cursor: isSelectingBounds ? 'crosshair' : 'default'
+    }}>
       {/* Information Panel */}
       <InfoPanel
-        towers={towers}
+        towers={safeTowers}
         nearestTower={nearestTower}
-        userPosition={userPosition}
+        userPosition={safeUserPosition}
         isLoading={isLoading}
         error={error}
+        isSelectingBounds={isSelectingBounds}
         onGenerateTowers={handleGenerateTowers}
+        onSelectBounds={handleSelectBounds}
         onClearTowers={handleClearTowers}
       />
 
       {/* Map */}
       <LeafletMap
         center={mapCenter}
-        zoom={11}
-        style={{ height: '100%', width: '100%', cursor: 'crosshair' }}
+        zoom={12}
+        style={{
+          height: '100%',
+          width: '100%',
+          cursor: isSelectingBounds ? 'crosshair' : 'default'
+        }}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -124,38 +214,64 @@ const MapContainer: React.FC = () => {
         />
 
         {/* Map click handler */}
-        <MapClickHandler onMapClick={handleMapClick} />
+        <MapClickHandler
+          onMapClick={handleMapClick}
+          isSelectingBounds={isSelectingBounds}
+        />
+
+        {/* Bounds selector */}
+        <BoundsSelector
+          isActive={isSelectingBounds}
+          onBoundsSelected={handleBoundsSelected}
+          onCancel={handleCancelBoundsSelection}
+        />
 
         {/* Coverage Circles */}
-        {towers.map((tower) => (
-          <CoverageCircle
-            key={`coverage-${tower.id}`}
-            center={[tower.latitude, tower.longitude]}
-            radiusKm={tower.coverage_radius_km}
-            isUserInCoverage={
-              nearestTower?.tower.id === tower.id &&
-              nearestTower.tower.is_in_coverage === true
-            }
-          />
-        ))}
+        {safeTowers.map((tower) => {
+          // Safe access to tower properties
+          if (!tower || typeof tower.latitude !== 'number' || typeof tower.longitude !== 'number') {
+            console.warn('Invalid tower data for coverage circle:', tower);
+            return null;
+          }
+
+          return (
+            <CoverageCircle
+              key={`coverage-${tower.id}`}
+              center={[tower.latitude, tower.longitude]}
+              radiusKm={tower.coverage_radius_km || 1.0}
+              isUserInCoverage={
+                safeNearestTower?.id === tower.id &&
+                safeNearestTower.is_in_coverage === true
+              }
+            />
+          );
+        })}
 
         {/* Tower Markers */}
-        {towers.map((tower) => (
-          <TowerMarker
-            key={tower.id}
-            tower={tower}
-            isNearest={nearestTower?.tower.id === tower.id}
-            isInCoverage={
-              nearestTower?.tower.id === tower.id &&
-              nearestTower.tower.is_in_coverage === true
-            }
-          />
-        ))}
+        {safeTowers.map((tower) => {
+          // Safe access to tower properties
+          if (!tower || typeof tower.latitude !== 'number' || typeof tower.longitude !== 'number') {
+            console.warn('Invalid tower data for marker:', tower);
+            return null;
+          }
+
+          return (
+            <TowerMarker
+              key={tower.id}
+              tower={tower}
+              isNearest={safeNearestTower?.id === tower.id}
+              isInCoverage={
+                safeNearestTower?.id === tower.id &&
+                safeNearestTower.is_in_coverage === true
+              }
+            />
+          );
+        })}
 
         {/* User Position Marker */}
-        {userPosition && (
+        {safeUserPosition && (
           <Marker
-            position={[userPosition.lat, userPosition.lng]}
+            position={[safeUserPosition.lat, safeUserPosition.lng]}
             icon={userIcon}
           >
             <Popup>
@@ -168,7 +284,7 @@ const MapContainer: React.FC = () => {
                   color: '#6b7280',
                   fontFamily: 'monospace'
                 }}>
-                  {userPosition.lat.toFixed(6)}, {userPosition.lng.toFixed(6)}
+                  {safeUserPosition.lat.toFixed(6)}, {safeUserPosition.lng.toFixed(6)}
                 </p>
                 {nearestTower && (
                   <p style={{
@@ -186,11 +302,11 @@ const MapContainer: React.FC = () => {
         )}
 
         {/* Connection Line */}
-        {userPosition && nearestTower && (
+        {safeUserPosition && nearestTower && safeNearestTower && (
           <ConnectionLine
-            start={[userPosition.lat, userPosition.lng]}
-            end={[nearestTower.tower.latitude, nearestTower.tower.longitude]}
-            isInCoverage={nearestTower.tower.is_in_coverage === true}
+            start={[safeUserPosition.lat, safeUserPosition.lng]}
+            end={[safeNearestTower.latitude, safeNearestTower.longitude]}
+            isInCoverage={safeNearestTower.is_in_coverage === true}
           />
         )}
       </LeafletMap>
