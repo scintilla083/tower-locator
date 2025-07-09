@@ -1,5 +1,5 @@
-// frontend/src/hooks/useMap.ts - Optimized version
-import { useState, useCallback, useRef } from 'react';
+// frontend/src/hooks/useMap.ts - Add loadAllTowers and useEffect
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Tower, LocationQuery, NearestTowerResponse, MapPosition } from '../types';
 import ApiService from '../services/api';
 
@@ -12,10 +12,10 @@ export interface UseMapReturn {
 
   setUserPosition: (position: MapPosition) => void;
   findNearestTower: (position: MapPosition) => Promise<void>;
-  loadTowersInArea: (bounds: any) => Promise<void>;
+
+  loadAllTowers: () => Promise<void>;
   generateRandomTowers: (count: number, bounds: any) => Promise<void>;
   clearAllTowers: () => Promise<void>;
-  clearError: () => void;
 }
 
 export const useMap = (): UseMapReturn => {
@@ -28,10 +28,36 @@ export const useMap = (): UseMapReturn => {
   // Use ref to prevent duplicate requests
   const loadingRef = useRef(false);
 
+  // Load all towers when component mounts
+  useEffect(() => {
+    loadAllTowers();
+  }, []);
+
   const setUserPosition = useCallback((position: MapPosition) => {
     setUserPositionState(position);
     setNearestTower(null);
     setError(null);
+  }, []);
+
+  const loadAllTowers = useCallback(async () => {
+    if (loadingRef.current) return;
+
+    setIsLoading(true);
+    loadingRef.current = true;
+    setError(null);
+
+    try {
+      const towersData = await ApiService.getAllTowers();
+      setTowers(towersData);
+      console.log(`Loaded ${towersData.length} towers from database`);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load towers';
+      setError(errorMessage);
+      console.error('Error loading towers:', errorMessage);
+    } finally {
+      setIsLoading(false);
+      loadingRef.current = false;
+    }
   }, []);
 
   const findNearestTower = useCallback(async (position: MapPosition) => {
@@ -59,31 +85,6 @@ export const useMap = (): UseMapReturn => {
     }
   }, []);
 
-  const loadTowersInArea = useCallback(async (bounds: any) => {
-    if (loadingRef.current) return;
-
-    setIsLoading(true);
-    loadingRef.current = true;
-    setError(null);
-
-    try {
-      const mapBounds = {
-        north: bounds.getNorth(),
-        south: bounds.getSouth(),
-        east: bounds.getEast(),
-        west: bounds.getWest()
-      };
-
-      const towersData = await ApiService.getTowersInBounds(mapBounds);
-      setTowers(towersData);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load towers';
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-      loadingRef.current = false;
-    }
-  }, []);
 
   const generateRandomTowers = useCallback(async (count: number, bounds: any) => {
     if (loadingRef.current) return;
@@ -137,10 +138,6 @@ export const useMap = (): UseMapReturn => {
     }
   }, []);
 
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
-
   return {
     towers,
     userPosition,
@@ -149,9 +146,9 @@ export const useMap = (): UseMapReturn => {
     error,
     setUserPosition,
     findNearestTower,
-    loadTowersInArea,
+    loadAllTowers,
     generateRandomTowers,
     clearAllTowers,
-    clearError
+
   };
 };

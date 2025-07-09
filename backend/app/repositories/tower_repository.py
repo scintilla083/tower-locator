@@ -1,4 +1,4 @@
-# backend/app/repositories/tower_repository.py - Updated with coverage boundary extraction
+# backend/app/repositories/tower_repository.py - Add get_all_active_towers method
 from typing import List, Optional
 import random
 import json
@@ -37,6 +37,17 @@ class TowerRepository(BaseRepository[Tower]):
 
         return []
 
+    def get_all_active_towers(self) -> List[Tower]:
+        """Get all active towers with their boundary data"""
+        towers = self.db.query(Tower).filter(Tower.is_active == True).all()
+
+        # Extract boundary points for all towers
+        for tower in towers:
+            tower.coverage_boundary_points = self._extract_boundary_points(tower)
+
+        print(f"Found {len(towers)} active towers in database")
+        return towers
+
     def find_nearest_tower(self, lat: float, lon: float, max_distance_km: float = 50.0) -> Optional[Tower]:
         user_point = func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326)
 
@@ -67,7 +78,6 @@ class TowerRepository(BaseRepository[Tower]):
                 tower.is_in_coverage = bool(is_in_coverage)
             else:
                 # Fallback to radius-based calculation
-
                 coverage_radius_m = tower.coverage_radius_km * 1000
                 tolerance_m = max(150.0, coverage_radius_m * 0.15)
                 tower.is_in_coverage = distance <= (coverage_radius_m + tolerance_m)
@@ -107,7 +117,6 @@ class TowerRepository(BaseRepository[Tower]):
             lat = bounds.south + (bounds.north - bounds.south) * random.random()
             lon = bounds.west + (bounds.east - bounds.west) * random.random()
             signal_strength = 75.0 + 25.0 * random.random()
-            #coverage_radius = 0.3 + 1.2 * random.random()
             coverage_radius = 1
 
             tower_data = {

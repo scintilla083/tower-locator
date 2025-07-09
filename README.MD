@@ -35,7 +35,6 @@ pip install -r requirements.txt
 
 # Set environment variables
 export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/tower_locator"
-export REDIS_URL="redis://localhost:6379"
 
 # Start PostgreSQL with PostGIS (separate terminal)
 docker run -d -p 5432:5432 -e POSTGRES_DB=tower_locator -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres postgis/postgis:13-3.1

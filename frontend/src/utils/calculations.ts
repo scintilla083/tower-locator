@@ -2,22 +2,8 @@
 import { EARTH_RADIUS_METERS, COVERAGE_CONFIG } from '../config/constants';
 import { MapPosition, MapBounds } from '../types';
 
-/**
- * Calculate distance between two points using Haversine formula
- */
-export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const φ1 = lat1 * Math.PI / 180;
-  const φ2 = lat2 * Math.PI / 180;
-  const Δφ = (lat2 - lat1) * Math.PI / 180;
-  const Δλ = (lon2 - lon1) * Math.PI / 180;
 
-  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-            Math.cos(φ1) * Math.cos(φ2) *
-            Math.sin(Δλ/2) * Math.sin(Δλ/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-  return EARTH_RADIUS_METERS * c;
-}
 
 /**
  * Generate accurate circle points using geodesic calculations
@@ -56,37 +42,8 @@ export function generateCirclePoints(
   return points;
 }
 
-/**
- * Check if coordinates are valid
- */
-export function isValidCoordinate(lat: number, lng: number): boolean {
-  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
-}
 
-/**
- * Create bounding box around a point with given radius
- */
-export function createBoundsFromCenter(center: MapPosition, radiusKm: number): MapBounds {
-  const latDelta = radiusKm / 111.32;
-  const lonDelta = radiusKm / (111.32 * Math.cos((center.lat * Math.PI) / 180));
 
-  return {
-    north: center.lat + latDelta,
-    south: center.lat - latDelta,
-    east: center.lng + lonDelta,
-    west: center.lng - lonDelta
-  };
-}
-
-/**
- * Calculate coverage tolerance
- */
-export function calculateCoverageTolerance(coverageRadiusMeters: number): number {
-  return Math.max(
-    COVERAGE_CONFIG.MIN_TOLERANCE_METERS,
-    coverageRadiusMeters * COVERAGE_CONFIG.TOLERANCE_PERCENTAGE
-  );
-}
 
 /**
  * Format distance for display

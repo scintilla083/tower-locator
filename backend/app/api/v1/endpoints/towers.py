@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -13,6 +14,13 @@ router = APIRouter()
 def get_tower_service(db: Session = Depends(get_db)) -> TowerService:
     tower_repository = TowerRepository(db)
     return TowerService(tower_repository)
+
+@router.get("/", response_model=List[TowerResponse])
+def get_all_towers(
+    tower_service: TowerService = Depends(get_tower_service)
+):
+    """Get all active towers with their boundary data"""
+    return tower_service.get_all_towers()
 
 @router.post("/", response_model=TowerResponse)
 def create_tower(

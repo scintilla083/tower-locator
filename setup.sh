@@ -80,7 +80,6 @@ geoalchemy2==0.14.2
 pydantic==2.5.0
 pytest==7.4.3
 pytest-asyncio==0.21.1
-redis==5.0.1
 python-multipart==0.0.6
 pydantic-settings
 EOF
@@ -107,17 +106,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   backend:
     build:
       context: ./backend
@@ -127,11 +115,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/tower_locator
-      REDIS_URL: redis://redis:6379
     volumes:
       - ./backend:/app
     restart: unless-stopped

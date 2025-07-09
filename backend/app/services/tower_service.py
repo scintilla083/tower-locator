@@ -1,4 +1,4 @@
-# backend/app/services/tower_service.py - Updated to include boundary points
+# backend/app/services/tower_service.py - Add get_all_towers method
 from typing import List, Optional
 from sqlalchemy import func
 from ..repositories.tower_repository import TowerRepository
@@ -10,6 +10,19 @@ from ..models.tower import Tower
 class TowerService:
     def __init__(self, tower_repository: TowerRepository):
         self.tower_repository = tower_repository
+
+    def get_all_towers(self) -> List[TowerResponse]:
+        """Get all active towers with their boundary data"""
+        towers = self.tower_repository.get_all_active_towers()
+        tower_responses = []
+
+        for tower in towers:
+            tower_response = TowerResponse.model_validate(tower)
+            tower_response.coverage_boundary_points = getattr(tower, 'coverage_boundary_points', [])
+            tower_responses.append(tower_response)
+
+        print(f"Loaded {len(tower_responses)} towers for frontend")
+        return tower_responses
 
     def create_tower(self, tower_data: TowerCreate) -> TowerResponse:
         tower_dict = tower_data.model_dump()

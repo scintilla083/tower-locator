@@ -1,4 +1,4 @@
-// frontend/src/services/api.ts - Optimized version
+// frontend/src/services/api.ts - Add getAllTowers method
 import axios, { AxiosError } from 'axios';
 import { API_CONFIG } from '../config/constants';
 import { Tower, TowerCreate, LocationQuery, NearestTowerResponse, MapBounds } from '../types';
@@ -20,6 +20,17 @@ class ApiService {
       throw new Error('Network error: Unable to connect to server. Check if backend is running.');
     } else {
       throw new Error(error.message || 'Unknown error occurred');
+    }
+  }
+
+  async getAllTowers(): Promise<Tower[]> {
+    try {
+      const response = await axios.get(`${this.baseURL}/towers/`, {
+        timeout: this.timeout,
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
     }
   }
 

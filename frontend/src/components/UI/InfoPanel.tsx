@@ -42,7 +42,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
           color: '#1f2937',
           marginBottom: '0.25rem'
         }}>
-          Tower Locator
+
         </h2>
         <p style={{
           fontSize: '0.875rem',
@@ -67,7 +67,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
             fontWeight: '600',
             marginBottom: '0.5rem'
           }}>
-            🎯 Select Generation Area
+            Select Generation Area
           </p>
           <p style={{
             color: '#2563eb',
@@ -85,9 +85,9 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
             borderRadius: '0.25rem',
             marginTop: '0.5rem'
           }}>
-            <div>📍 Step 1: Click first corner</div>
-            <div>📍 Step 2: Click second corner</div>
-            <div>⌨️ Press ESC to cancel</div>
+            <div>Step 1: Click first corner</div>
+            <div>Step 2: Click second corner</div>
+            <div>Press ESC to cancel</div>
           </div>
         </div>
       )}
@@ -114,9 +114,9 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
           }}
         >
           {isSelectingBounds ? (
-            <>🎯 Selecting Area... ({selectionStep})</>
+            <>Selecting Area... ({selectionStep})</>
           ) : (
-            <>📍 Select Generation Area</>
+            <>Select Generation Area</>
           )}
         </button>
 
@@ -171,7 +171,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
             opacity: isLoading || isSelectingBounds ? 0.7 : 1
           }}
         >
-          🗑️ Clear All Towers
+          Clear All Towers
         </button>
       </div>
 
@@ -341,7 +341,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
             fontSize: '0.875rem',
             fontWeight: '500'
           }}>
-            ❌ Error
+            Error
           </p>
           <p style={{
             color: '#dc2626',
@@ -367,14 +367,14 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
             fontSize: '0.875rem',
             fontWeight: '500'
           }}>
-            ✅ {towers.length} towers loaded successfully!
+             {towers.length} towers loaded successfully!
           </p>
           <p style={{
             color: '#065f46',
             fontSize: '0.75rem',
             marginTop: '0.25rem'
           }}>
-            Coverage zones: 300-2000m radius
+            Coverage zones: 1000m radius
           </p>
         </div>
       )}
@@ -416,7 +416,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
             fontSize: '0.875rem',
             fontWeight: '500'
           }}>
-            🏗️ Get Started
+            Get Started
           </p>
           <p style={{
             color: '#6b7280',

@@ -20,18 +20,9 @@ export const COVERAGE_CONFIG = {
   DEFAULT_RADIUS_KM: 1.0,
   MIN_RADIUS_KM: 0.1,
   MAX_RADIUS_KM: 5.0,
-  TOLERANCE_PERCENTAGE: 0.15,
-  MIN_TOLERANCE_METERS: 150,
+
 } as const;
 
-export const UI_CONFIG = {
-  MARKER_SIZES: {
-    TOWER: 20,
-    USER: 16,
-  },
-  ANIMATION_DURATION: 300,
-  DEBOUNCE_DELAY: 300,
-} as const;
 
 export const EARTH_RADIUS_KM = 6371;
 export const EARTH_RADIUS_METERS = 6371000;
