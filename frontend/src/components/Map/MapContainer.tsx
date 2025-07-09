@@ -426,7 +426,7 @@ const MapContainer: React.FC = () => {
           borderRadius: '0.25rem',
           fontSize: '0.75rem',
           fontFamily: 'monospace',
-          zIndex: 1000
+          zIndex: 1000;
         }}>
           <div>Tower: {safeNearestTower.name}</div>
           <div>Backend Distance: {(nearestTower.distance_km * 1000).toFixed(0)}m</div>
