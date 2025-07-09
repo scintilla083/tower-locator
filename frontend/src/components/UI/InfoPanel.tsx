@@ -1,19 +1,7 @@
-// frontend/src/components/UI/InfoPanel.tsx
+// frontend/src/components/UI/InfoPanel.tsx - Optimized version
 import React from 'react';
-import { Tower, NearestTowerResponse } from '../../types';
-
-interface InfoPanelProps {
-  towers: Tower[];
-  nearestTower: NearestTowerResponse | null;
-  userPosition: { lat: number; lng: number } | null;
-  isLoading: boolean;
-  error: string | null;
-  isSelectingBounds: boolean;
-  selectionStep: 'none' | 'first' | 'second';
-  onGenerateTowers: () => void;
-  onSelectBounds: () => void;
-  onClearTowers: () => void;
-}
+import { InfoPanelProps } from '../../types';
+import { formatDistance, formatCoordinates } from '../../utils/calculations';
 
 const InfoPanel: React.FC<InfoPanelProps> = ({
   towers,
@@ -27,24 +15,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   onSelectBounds,
   onClearTowers
 }) => {
-  console.log('InfoPanel render:', { towers: towers.length, isLoading, error, nearestTower });
-
-  const handleGenerateTowers = () => {
-    console.log('Generate towers button clicked');
-    onGenerateTowers();
-  };
-
-  const handleSelectBounds = () => {
-    console.log('Select bounds button clicked');
-    onSelectBounds();
-  };
-
-  const handleClearTowers = () => {
-    console.log('Clear towers button clicked');
-    onClearTowers();
-  };
-
-  // Safe access to nearest tower data
   const safeNearestTower = nearestTower?.tower;
   const safeDistance = nearestTower?.distance_km;
   const safeSignalStrength = safeNearestTower?.signal_strength ?? 0;
@@ -52,7 +22,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
 
   const getSelectionInstructions = () => {
     if (!isSelectingBounds) return null;
-
     switch (selectionStep) {
       case 'first':
         return 'Click on map to set first corner';
@@ -81,21 +50,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
         }}>
           Click on map to find nearest tower
         </p>
-      </div>
-
-      {/* Debug Info */}
-      <div style={{
-        marginBottom: '1rem',
-        padding: '0.5rem',
-        backgroundColor: '#f3f4f6',
-        borderRadius: '0.375rem',
-        fontSize: '0.75rem',
-        fontFamily: 'monospace'
-      }}>
-        <div>Loading: {isLoading ? 'YES' : 'NO'}</div>
-        <div>Towers: {towers.length}</div>
-        <div>Error: {error || 'None'}</div>
-        <div>Selecting: {isSelectingBounds ? selectionStep.toUpperCase() : 'NO'}</div>
       </div>
 
       {/* Bounds Selection Mode */}
@@ -141,7 +95,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       {/* Controls */}
       <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         <button
-          onClick={handleSelectBounds}
+          onClick={onSelectBounds}
           disabled={isLoading || isSelectingBounds}
           style={{
             width: '100%',
@@ -167,7 +121,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
         </button>
 
         <button
-          onClick={handleGenerateTowers}
+          onClick={onGenerateTowers}
           disabled={isLoading || isSelectingBounds}
           style={{
             width: '100%',
@@ -203,7 +157,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
         </button>
 
         <button
-          onClick={handleClearTowers}
+          onClick={onClearTowers}
           disabled={isLoading || isSelectingBounds}
           style={{
             width: '100%',
@@ -245,7 +199,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
               fontSize: '0.75rem',
               color: '#1f2937'
             }}>
-              {userPosition.lat?.toFixed(4) || '0.0000'}, {userPosition.lng?.toFixed(4) || '0.0000'}
+              {formatCoordinates(userPosition.lat, userPosition.lng, 4)}
             </span>
           </div>
         )}
@@ -322,7 +276,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                   fontWeight: '500',
                   color: safeNearestTower.is_in_coverage ? '#059669' : '#d97706'
                 }}>
-                  {(safeDistance * 1000).toFixed(0)}m
+                  {formatDistance(safeDistance)}
                 </span>
               </div>
             )}
@@ -342,7 +296,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
               marginBottom: '0.25rem'
             }}>
               <span style={{ color: '#6b7280' }}>Coverage:</span>
-              <span style={{ fontWeight: '500' }}>{(safeCoverageRadius * 1000).toFixed(0)}m</span>
+              <span style={{ fontWeight: '500' }}>{formatDistance(safeCoverageRadius)}</span>
             </div>
 
             <div style={{

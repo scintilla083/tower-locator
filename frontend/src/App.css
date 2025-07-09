@@ -1,4 +1,4 @@
-/* frontend/src/App.css */
+/* frontend/src/App.css - Optimized version */
 .App {
   height: 100vh;
   display: flex;
@@ -12,7 +12,7 @@
   cursor: crosshair !important;
 }
 
-/* Info panel positioning - FIXED */
+/* Info panel positioning */
 .info-panel {
   position: absolute !important;
   top: 16px !important;
@@ -31,19 +31,16 @@
 }
 
 /* Custom marker styles */
-.custom-tower-marker {
-  background: none !important;
-  border: none !important;
-}
-
+.custom-tower-marker,
 .custom-user-marker {
   background: none !important;
   border: none !important;
 }
 
-/* Smooth transitions for all interactive elements */
+/* Smooth transitions */
 .leaflet-marker-icon,
-.leaflet-popup {
+.leaflet-popup,
+.leaflet-interactive {
   transition: all 0.3s ease !important;
 }
 
@@ -57,7 +54,7 @@
   background: white !important;
 }
 
-/* Control positioning to avoid overlap with info panel */
+/* Control positioning */
 .leaflet-top.leaflet-left {
   top: 380px !important;
 }
@@ -66,17 +63,12 @@
   top: 10px !important;
 }
 
-/* Loading animation */
+/* Animations */
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-/* Pulse animation for nearest tower */
 @keyframes pulse {
   0% {
     box-shadow: 0 0 0 0 currentColor;
@@ -92,7 +84,6 @@
   }
 }
 
-/* Ripple animation for user marker */
 @keyframes ripple {
   0% {
     transform: scale(0.8);
@@ -108,7 +99,7 @@
   }
 }
 
-/* Smooth hover effects */
+/* Button effects */
 button {
   transition: all 0.2s ease !important;
 }
@@ -128,12 +119,7 @@ button:disabled {
   opacity: 0.6 !important;
 }
 
-/* Coverage circle animations */
-.leaflet-interactive {
-  transition: all 0.3s ease !important;
-}
-
-/* Scrollbar styling for info panel */
+/* Scrollbar styling */
 .info-panel::-webkit-scrollbar {
   width: 6px;
 }
@@ -151,7 +137,7 @@ button:disabled {
   background: rgba(0, 0, 0, 0.3);
 }
 
-/* Header gradient fix */
+/* Header gradient */
 .bg-gradient-to-r {
   background: linear-gradient(to right, #2563eb, #1d4ed8);
 }
@@ -186,19 +172,18 @@ button:disabled {
   }
 }
 
-/* Fix for potential layout issues */
+/* Base layout */
 * {
   box-sizing: border-box;
 }
 
-/* Ensure main content takes full height */
 main {
   flex: 1;
   position: relative;
   overflow: hidden;
 }
 
-/* Fix z-index issues */
+/* Z-index management */
 .leaflet-pane {
   z-index: auto !important;
 }
@@ -211,7 +196,7 @@ main {
   z-index: 800 !important;
 }
 
-/* Map cursor fix */
+/* Map cursor */
 .leaflet-grab {
   cursor: crosshair !important;
 }

@@ -1,4 +1,4 @@
-// frontend/src/types/index.ts
+// frontend/src/types/index.ts - Consolidated and optimized
 export interface Tower {
   id: number;
   name: string;
@@ -44,4 +44,18 @@ export interface MapBounds {
 export interface MapPosition {
   lat: number;
   lng: number;
+}
+
+// UI component props
+export interface InfoPanelProps {
+  towers: Tower[];
+  nearestTower: NearestTowerResponse | null;
+  userPosition: MapPosition | null;
+  isLoading: boolean;
+  error: string | null;
+  isSelectingBounds: boolean;
+  selectionStep: 'none' | 'first' | 'second';
+  onGenerateTowers: () => void;
+  onSelectBounds: () => void;
+  onClearTowers: () => void;
 }
