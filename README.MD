@@ -38,7 +38,8 @@ docker-compose up --build
 ```bash
 # Check database logs
 docker-compose logs db
-
+# Delete DB volume
+docker volume rm tower-locator_postgres_data
 # Restart database
 docker-compose restart db
 ```
