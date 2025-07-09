@@ -1,4 +1,3 @@
-# backend/app/repositories/tower_repository.py - Add get_all_active_towers method
 from typing import List, Optional
 import random
 import json
@@ -21,7 +20,6 @@ class TowerRepository(BaseRepository[Tower]):
             return []
 
         try:
-            # Get GeoJSON representation of the boundary
             geojson_result = self.db.query(
                 ST_AsGeoJSON(tower.coverage_boundary)
             ).scalar()
@@ -29,7 +27,6 @@ class TowerRepository(BaseRepository[Tower]):
             if geojson_result:
                 geojson = json.loads(geojson_result)
                 if geojson.get('type') == 'Polygon' and geojson.get('coordinates'):
-                    # Extract exterior ring coordinates and convert [lon, lat] to [lat, lon]
                     coords = geojson['coordinates'][0]
                     return [[coord[1], coord[0]] for coord in coords]
         except Exception as e:
@@ -41,7 +38,6 @@ class TowerRepository(BaseRepository[Tower]):
         """Get all active towers with their boundary data"""
         towers = self.db.query(Tower).filter(Tower.is_active == True).all()
 
-        # Extract boundary points for all towers
         for tower in towers:
             tower.coverage_boundary_points = self._extract_boundary_points(tower)
 
@@ -70,7 +66,6 @@ class TowerRepository(BaseRepository[Tower]):
             tower, distance = query
             tower.distance_km = distance / 1000
 
-            # Check coverage using the actual boundary polygon if available
             if tower.coverage_boundary:
                 is_in_coverage = self.db.query(
                     functions.ST_Within(user_point, tower.coverage_boundary)
@@ -82,7 +77,6 @@ class TowerRepository(BaseRepository[Tower]):
                 tolerance_m = max(150.0, coverage_radius_m * 0.15)
                 tower.is_in_coverage = distance <= (coverage_radius_m + tolerance_m)
 
-            # Extract boundary points for frontend
             tower.coverage_boundary_points = self._extract_boundary_points(tower)
 
             print(f"=== COVERAGE BOUNDARY DEBUG ===")
@@ -102,7 +96,6 @@ class TowerRepository(BaseRepository[Tower]):
             functions.ST_Within(Tower.location, bbox)
         ).all()
 
-        # Extract boundary points for all towers
         for tower in towers:
             tower.coverage_boundary_points = self._extract_boundary_points(tower)
 
@@ -131,10 +124,8 @@ class TowerRepository(BaseRepository[Tower]):
 
             tower = self.create(tower_data)
 
-            # Refresh to get the auto-generated coverage_boundary from the event listener
             self.db.refresh(tower)
 
-            # Extract boundary points
             tower.coverage_boundary_points = self._extract_boundary_points(tower)
             towers.append(tower)
 

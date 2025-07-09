@@ -30,10 +30,8 @@ class TowerService:
 
         tower = self.tower_repository.create(tower_dict)
 
-        # Refresh to get auto-generated coverage_boundary
         self.tower_repository.db.refresh(tower)
 
-        # Extract boundary points
         tower.coverage_boundary_points = self.tower_repository._extract_boundary_points(tower)
 
         return TowerResponse.model_validate(tower)

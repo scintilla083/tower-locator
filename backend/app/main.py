@@ -4,7 +4,6 @@ from .core.database import engine
 from .models.base import Base
 from .api.v1.router import api_router
 
-# Create tables (including the new coverage_boundary column)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Tower Locator API", version="1.0.0")
