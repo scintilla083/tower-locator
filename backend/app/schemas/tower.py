@@ -1,6 +1,6 @@
-# backend/app/schemas/tower.py
+# backend/app/schemas/tower.py - Updated with coverage boundary points
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional
+from typing import Optional, List
 
 
 class TowerBase(BaseModel):
@@ -10,7 +10,7 @@ class TowerBase(BaseModel):
     signal_strength: float = Field(default=100.0, ge=0, le=100)
     tower_type: str = Field(default="4G")
     is_active: bool = Field(default=True)
-    coverage_radius_km: float = Field(default=1.0, ge=0.1, le=5.0)  # Reduced from 5.0 to 1.0, max 5km
+    coverage_radius_km: float = Field(default=1.0, ge=0.1, le=5.0)
 
 
 class TowerCreate(TowerBase):
@@ -23,3 +23,5 @@ class TowerResponse(TowerBase):
     id: int
     distance_km: Optional[float] = None
     is_in_coverage: Optional[bool] = None
+    # NEW: Coverage boundary points for accurate frontend rendering
+    coverage_boundary_points: Optional[List[List[float]]] = None  # [[lat, lon], [lat, lon], ...]

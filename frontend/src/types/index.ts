@@ -1,4 +1,4 @@
-// frontend/src/types/index.ts - Consolidated and optimized
+// frontend/src/types/index.ts - Updated with boundary points
 export interface Tower {
   id: number;
   name: string;
@@ -10,6 +10,8 @@ export interface Tower {
   coverage_radius_km: number;
   distance_km?: number;
   is_in_coverage?: boolean;
+  // NEW: Accurate coverage boundary points from backend
+  coverage_boundary_points?: [number, number][]; // [[lat, lon], [lat, lon], ...]
 }
 
 export interface TowerCreate {

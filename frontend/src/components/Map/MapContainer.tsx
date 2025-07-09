@@ -1,12 +1,12 @@
-// frontend/src/components/Map/MapContainer.tsx - Optimized version
+// frontend/src/components/Map/MapContainer.tsx - Updated with geodesic coverage
 import React, { useState } from 'react';
-import { MapContainer as LeafletMap, TileLayer, Marker, Popup, Circle, useMapEvents } from 'react-leaflet';
+import { MapContainer as LeafletMap, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { useMap } from '../../hooks/useMap';
 import { MAP_CONFIG } from '../../config/constants';
 import { formatCoordinates, formatDistance } from '../../utils/calculations';
 import TowerMarker from './TowerMarker';
-import AccurateCoverageCircle from './AccurateCoverageCircle';
+import GeodesicCoveragePolygon from './GeodesicCoveragePolygon';
 import ConnectionLine from './ConnectionLine';
 import BoundsSelector from './BoundsSelector';
 import InfoPanel from '../UI/InfoPanel';
@@ -212,9 +212,15 @@ const MapContainer: React.FC = () => {
           onCancel={handleCancelBoundsSelection}
         />
 
-        {/* Coverage Circles */}
+        {/* Geodesic Coverage Polygons */}
         {safeTowers.map((tower) => {
           if (!tower || typeof tower.latitude !== 'number' || typeof tower.longitude !== 'number') {
+            return null;
+          }
+
+          // Use geodesic boundary points if available, otherwise skip
+          if (!tower.coverage_boundary_points || tower.coverage_boundary_points.length < 3) {
+            console.warn(`Tower ${tower.name} has no valid boundary points`);
             return null;
           }
 
@@ -222,29 +228,13 @@ const MapContainer: React.FC = () => {
                                                   safeNearestTower.is_in_coverage === true;
 
           return (
-            <AccurateCoverageCircle
-              key={`coverage-${tower.id}`}
-              center={[tower.latitude, tower.longitude]}
-              radiusMeters={(tower.coverage_radius_km || 1.0) * 1000}
+            <GeodesicCoveragePolygon
+              key={`geodesic-coverage-${tower.id}`}
+              boundaryPoints={tower.coverage_boundary_points}
               isUserInCoverage={isThisTowerNearestAndInCoverage}
             />
           );
         })}
-
-        {/* Debug Circle - Backend Distance */}
-        {process.env.NODE_ENV === 'development' && safeUserPosition && safeNearestTower && nearestTower && (
-          <Circle
-            center={[safeNearestTower.latitude, safeNearestTower.longitude]}
-            radius={nearestTower.distance_km * 1000}
-            pathOptions={{
-              color: '#ff0000',
-              fillColor: 'transparent',
-              weight: 1,
-              opacity: 0.8,
-              dashArray: '3, 3'
-            }}
-          />
-        )}
 
         {/* Tower Markers */}
         {safeTowers.map((tower) => {
@@ -301,6 +291,9 @@ const MapContainer: React.FC = () => {
                     </p>
                     <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>
                       Tower: {nearestTower.tower.name}
+                    </p>
+                    <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                      Boundary Points: {nearestTower.tower.coverage_boundary_points?.length || 0}
                     </p>
                   </>
                 )}

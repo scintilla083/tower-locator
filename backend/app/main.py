@@ -4,7 +4,7 @@ from .core.database import engine
 from .models.base import Base
 from .api.v1.router import api_router
 
-# Create tables
+# Create tables (including the new coverage_boundary column)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Tower Locator API", version="1.0.0")
@@ -12,11 +12,10 @@ app = FastAPI(title="Tower Locator API", version="1.0.0")
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # original - allow_origins=["http://localhost:3000"]
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-
 )
 
 app.include_router(api_router, prefix="/api/v1")
